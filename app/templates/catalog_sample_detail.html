@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ m.title }} — Catalog Example | PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    .sample-page { max-width:900px; padding-top:2rem; }
+    .sample-notice { padding:1rem 1.2rem; border:1px solid var(--border-gold); border-radius:12px; color:var(--text-muted); background:rgba(18,14,10,.72); }
+    .sample-facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:.8rem; margin-top:1.2rem; }
+    .sample-fact { padding:.9rem; border:1px solid rgba(245,158,11,.18); border-radius:10px; }
+    .sample-fact span,.sample-fact strong { display:block; }
+    .sample-fact span { color:var(--text-muted); font-size:.8rem; }
+    .sample-fact strong { margin-top:.2rem; color:var(--text-main); }
+  </style>
+</head>
+<body>
+{% include "partials/nav.html" %}
+<main class="container sample-page">
+  <p><a href="/repository" class="repo-meta">← Back to repository</a></p>
+  <section class="card" style="margin-top:1rem">
+    <span class="badge">CICT catalog example · {{ m.collection }}</span>
+    <h1 style="font-family:'Cinzel',serif;color:var(--text-gold);margin:.8rem 0">{{ m.title }}</h1>
+    <p style="color:var(--text-muted)">{{ m.description }}</p>
+    <div class="sample-notice" style="margin-top:1rem"><strong style="color:var(--text-gold)">Catalog example, not a digitized manuscript.</strong> This page demonstrates how a source-linked record appears in PalmLeaf AI. CICT’s listing provides work and collection counts; this project does not have a folio image, transcription, or trained analysis for this item.</div>
+    <div class="sample-facts">
+      <div class="sample-fact"><span>Literary collection</span><strong>{{ m.collection }}</strong></div>
+      <div class="sample-fact"><span>Source institutions in CICT listing</span><strong>{{ m.source_institution_count }}</strong></div>
+      <div class="sample-fact"><span>Pothi bundles in CICT listing</span><strong>{{ m.pothi_bundle_count }}</strong></div>
+      <div class="sample-fact"><span>Script style</span><strong>Not assessed</strong></div>
+      <div class="sample-fact"><span>Historical period</span><strong>Not specified in this listing</strong></div>
+      <div class="sample-fact"><span>Record type</span><strong>Work-level catalog listing</strong></div>
+    </div>
+    <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.3rem">
+      <a class="btn-primary" href="{{ m.source_url }}" target="_blank" rel="noopener noreferrer">Open the CICT source ↗</a>
+      <a class="btn-secondary" href="/analytics">View repository analytics</a>
+    </div>
+  </section>
+</main>
+{% include "partials/footer.html" %}
+</body>
+</html>

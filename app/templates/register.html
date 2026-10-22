@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="max-width:540px;padding-top:3rem">
+  <div class="card">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold);text-align:center;margin-bottom:0.5rem">✨ Create Account</h2>
+    <p style="text-align:center;color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem">Join the Tamil Palm-Leaf Manuscript Research Platform</p>
+
+    {% if error %}
+    <div style="background:rgba(239, 68, 68, 0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1.25rem;font-size:0.9rem">
+      ⚠️ {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="/register">
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>Username</label>
+        <input type="text" name="username" placeholder="e.g. karikolraj" required />
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="e.g. researcher@university.edu" required />
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label>User Category / Characteristic Role</label>
+        <select name="role">
+          <option value="Student / Researcher">Student / Researcher (Basic technical knowledge, learning manuscripts)</option>
+          <option value="Historian / Expert">Historian / Expert (Advanced epigraphic knowledge, research use)</option>
+          <option value="Administrator">Administrator (Full system control &amp; audit access)</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%">🚀 Create Account</button>
+    </form>
+
+    <div style="margin-top:1.5rem;text-align:center;font-size:0.88rem;color:var(--text-muted)">
+      Already registered? <a href="/login" style="color:var(--text-gold);font-weight:600">Sign In Here</a>
+    </div>
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Search — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">🔍 Intelligent Manuscript Search</h2>
+  </div>
+
+  <div class="card">
+    <form method="GET" action="/search" class="search-form">
+      <input type="text" name="q" value="{{ keyword }}" placeholder="Search title, Tamil OCR text, tags, dynasty or location…" class="search-input"/>
+      <select name="category">
+        <option value="All" {% if category=='All' %}selected{% endif %}>All Categories</option>
+        {% for cat in ['Medicine','Astrology','Literature','Philosophy','Mathematics','History'] %}
+        <option value="{{ cat }}" {% if category==cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+      <select name="dynasty">
+        <option value="All" {% if dynasty=='All' %}selected{% endif %}>All Dynasties</option>
+        {% for d in ['Chola','Pandya','Chera','Pallava','Nayak'] %}
+        <option value="{{ d }}" {% if dynasty==d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+      <select name="period">
+        <option value="All" {% if period=='All' %}selected{% endif %}>All Periods</option>
+        {% for p in ['1st–5th Century CE','4th–9th Century CE','6th–14th Century CE','9th–13th Century CE','16th–18th Century CE','Unknown Period'] %}
+        <option value="{{ p }}" {% if period==p %}selected{% endif %}>{{ p }}</option>
+        {% endfor %}
+      </select>
+      <select name="script">
+        <option value="All" {% if script=='All' %}selected{% endif %}>All Script Styles</option>
+        {% for s in ['Dense Script','Cursive Script','Geometric Script','Sparse Script'] %}
+        <option value="{{ s }}" {% if script==s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+      <input type="text" name="location" value="{{ location }}" placeholder="Discovery location" class="search-input"/>
+      <button type="submit" class="btn-primary">Search Records</button>
+    </form>
+  </div>
+
+  <p class="result-count" style="color:var(--text-muted)">{{ results|length }} {% if results|length == 1 %}manuscript{% else %}manuscripts{% endif %} found</p>
+
+  {% if results %}
+  <div class="repo-grid">
+    {% for m in results %}
+    <a href="/manuscript/{{ m.id }}" class="repo-card">
+      {% if m.original_path and (m.original_path.startswith('http') or m.original_path.startswith('/')) %}
+      <img src="{{ m.original_path }}" alt="Manuscript"/>
+      {% else %}
+      <div class="no-img">🏺</div>
+      {% endif %}
+      <div class="repo-info">
+        <h4>{{ m.title }}</h4>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+          <span class="badge cat-{{ m.category|lower }}">{{ m.category }}</span>
+          <span class="badge">{{ m.dynasty }}</span>
+        </div>
+        <p class="repo-meta">📍 {{ m.location }}</p>
+        {% if keyword and m.clean_text %}
+        <p class="snippet">…{{ m.clean_text[:120] }}…</p>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% elif keyword or category != 'All' or dynasty != 'All' or period != 'All' or script != 'All' or location %}
+  <div class="empty-state">
+    <p>🔎 No manuscripts match these search details.</p>
+    <p style="color:var(--text-muted);margin-top:.35rem">Try a broader keyword or clear the filters to see the full archive.</p>
+    <a href="/search" class="btn-secondary" style="margin-top:1rem">Clear search</a>
+  </div>
+  {% endif %}
+</main>
+
+{% include "partials/footer.html" %}
+</body>
+</html>

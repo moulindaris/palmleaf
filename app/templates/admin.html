@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">⚙️ Administrator Control Dashboard</h2>
+    <div style="display:flex;gap:0.75rem">
+      <a href="/export/csv" class="btn-primary">📥 Export Database (CSV)</a>
+      <a href="/repository" class="btn-secondary">📚 Manage Manuscripts</a>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <h3>👥 Registered System Accounts ({{ users|length }})</h3>
+    <table class="meta-table">
+      <thead><tr><th>#</th><th>Username</th><th>Email</th><th>Role</th><th>Registered On</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.id }}</td>
+          <td><strong>{{ u.username }}</strong></td>
+          <td>{{ u.email }}</td>
+          <td><span class="badge {% if u.role=='Administrator' %}cat-history{% else %}cat-literature{% endif %}">{{ u.role }}</span></td>
+          <td><code>{{ u.created_at[:10] }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Manuscripts Table -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <h3>🏺 System Manuscripts Catalog ({{ manuscripts|length }})</h3>
+    <table class="meta-table">
+      <thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Dynasty</th><th>Location</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for m in manuscripts[:15] %}
+        <tr>
+          <td>{{ m.id }}</td>
+          <td><a href="/manuscript/{{ m.id }}" style="color:var(--text-gold);font-weight:600">{{ m.title }}</a></td>
+          <td><span class="badge cat-{{ m.category|lower }}">{{ m.category }}</span></td>
+          <td>{{ m.dynasty }}</td>
+          <td>📍 {{ m.location }}</td>
+          <td><button onclick="deleteMs({{ m.id }})" class="btn-secondary" style="font-size:0.8rem;color:var(--red-glow);border-color:var(--red-glow)">🗑️ Delete</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Audit Logs -->
+  <div class="card">
+    <h3>🛡️ System Action Audit Logs</h3>
+    <table class="meta-table">
+      <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td><code>{{ log.timestamp[:19] }}</code></td>
+          <td><span class="badge cat-astrology">{{ log.user_name }}</span></td>
+          <td><strong style="color:var(--text-gold)">{{ log.action }}</strong></td>
+          <td>{{ log.details }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+
+<script>
+async function deleteMs(id) {
+  if (!confirm(`Delete manuscript #${id} permanently?`)) return;
+  await fetch(`/api/manuscript/${id}/delete`, { method: "POST" });
+  location.reload();
+}
+</script>
+</body>
+</html>

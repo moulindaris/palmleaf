@@ -1,0 +1,50 @@
+<nav class="navbar">
+  <a class="nav-brand" href="/">🌿 PalmLeaf AI</a>
+  <div class="nav-links" id="primaryNavigation">
+    <a href="/" class="{% if request.path == '/' %}active{% endif %}">🏠 <span data-i18n="Home">Home</span></a>
+    <a href="/repository" class="{% if request.path == '/repository' %}active{% endif %}">📚 <span data-i18n="Repository">Repository</span></a>
+    <div class="nav-menu {% if request.path in ['/search', '/bulk', '/map', '/analytics', '/achievements', '/compare'] %}has-active{% endif %}">
+      <button class="nav-menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" onclick="const menu=this.parentElement; const open=menu.classList.toggle('open'); this.setAttribute('aria-expanded', open);">Explore <span aria-hidden="true">⌄</span></button>
+      <div class="nav-dropdown" role="menu">
+        <a href="/search" role="menuitem" class="{% if request.path == '/search' %}active{% endif %}"><span>🔍</span><span><strong>Search</strong><small>Find manuscripts and OCR text</small></span></a>
+        <a href="/bulk" role="menuitem" class="{% if request.path == '/bulk' %}active{% endif %}"><span>📦</span><span><strong>Bulk upload</strong><small>Process multiple scans</small></span></a>
+        <a href="/map" role="menuitem" class="{% if request.path == '/map' %}active{% endif %}"><span>🗺️</span><span><strong>Historical map</strong><small>Explore origins and archives</small></span></a>
+        <a href="/analytics" role="menuitem" class="{% if request.path == '/analytics' %}active{% endif %}"><span>📊</span><span><strong>Analytics</strong><small>View collection insights</small></span></a>
+        <a href="/achievements" role="menuitem" class="{% if request.path == '/achievements' %}active{% endif %}"><span>🏆</span><span><strong>Achievements</strong><small>Track preservation milestones</small></span></a>
+        <a href="/compare" role="menuitem" class="{% if request.path == '/compare' %}active{% endif %}"><span>🌍</span><span><strong>Script comparison</strong><small>Compare writing traditions</small></span></a>
+      </div>
+    </div>
+    <div class="language-switch" role="group" aria-label="Language selection">
+      <button type="button" class="language-button" data-language="en" aria-pressed="true">EN</button>
+      <button type="button" class="language-button" data-language="ta" aria-pressed="false">தமிழ்</button>
+    </div>
+
+    {% if session.get('user') %}
+      {% if session.get('user').role == 'Administrator' %}
+      <a href="/admin" class="{% if request.path == '/admin' %}active{% endif %}" style="color:var(--text-gold);font-weight:700">⚙️ Admin</a>
+      {% endif %}
+      {% if session.get('user').is_guest %}
+      <span>👤 Guest</span>
+      <a href="/logout" style="color:var(--red-glow)">🚪 Exit Guest</a>
+      {% else %}
+      <a href="/profile" class="{% if request.path == '/profile' %}active{% endif %}">👤 {{ session.get('user').username }}</a>
+      <a href="/logout" style="color:var(--red-glow)">🚪 Logout</a>
+      {% endif %}
+    {% else %}
+      <a href="/login" class="{% if request.path == '/login' %}active{% endif %}">🔑 Login</a>
+      <a href="/register" class="btn-primary {% if request.path == '/register' %}active{% endif %}" style="padding:0.35rem 0.8rem;font-size:0.85rem">✨ Register</a>
+    {% endif %}
+  </div>
+  <button class="nav-toggle" type="button" aria-label="Open navigation" aria-controls="primaryNavigation" aria-expanded="false" onclick="const nav=document.getElementById('primaryNavigation'); const open=nav.classList.toggle('open'); this.setAttribute('aria-expanded', open); this.textContent=open ? '✕' : '☰';">☰</button>
+</nav>
+<script src="{{ url_for('static', filename='js/i18n.js') }}" defer></script>
+<script>
+  document.addEventListener('click', event => {
+    document.querySelectorAll('.nav-menu.open').forEach(menu => {
+      if (!menu.contains(event.target)) {
+        menu.classList.remove('open');
+        menu.querySelector('.nav-menu-trigger')?.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+</script>
