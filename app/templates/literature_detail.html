@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ record.title }} — Tamil Literature | PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    .work-page { max-width:900px; padding-top:2rem; }
+    .work-video { width:100%; aspect-ratio:16/9; border:1px solid var(--border-gold); border-radius:14px; background:#080a0b; }
+    .work-intro { color:var(--text-muted); max-width:760px; line-height:1.7; }
+    .work-actions { display:flex; gap:.7rem; flex-wrap:wrap; margin-top:1.2rem; }
+  </style>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container work-page">
+  <p><a href="/repository" class="repo-meta">← Back to repository and learning map</a></p>
+  <section class="card" style="margin-top:1rem">
+    <span class="badge">Tamil literature · தமிழ் இலக்கியம்</span>
+    <h1 style="font-family:'Cinzel',serif;color:var(--text-gold);margin:.8rem 0">{{ record.title }}</h1>
+    {% if record.author %}<p class="repo-meta">Author: {{ record.author }}</p>{% endif %}
+    {% if video_id %}
+    <p class="work-intro">The Thirukkural contains 1,330 couplets across 133 chapters, traditionally arranged in three parts: virtue (அறம்), wealth and public life (பொருள்), and love (காமம்). This short video offers a first introduction; use the linked catalog record to explore an edition.</p>
+    {% elif record.source_name == 'Central Institute of Classical Tamil (CICT) Digital Archive' %}
+    <p class="work-intro">This CICT catalog listing places the work in the <strong>{{ record.collection }}</strong> collection. The archive link below leads to CICT’s manuscript collection and any available work-level material.</p>
+    {% else %}
+    <p class="work-intro">Explore this work through its linked catalog record. Publication and holding-institution details are shown when available.</p>
+    {% endif %}
+  </section>
+
+  {% if video_id %}
+  <section class="card">
+    <h2 style="color:var(--text-gold)">A short introduction</h2>
+    <p class="repo-meta">Video in Tamil · Tamil Digital School</p>
+    <iframe class="work-video"
+      src="https://www.youtube-nocookie.com/embed/{{ video_id }}"
+      title="Basic introduction to Thirukkural in Tamil"
+      loading="lazy"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen></iframe>
+    <p class="repo-meta" style="margin-top:.7rem">If the video does not load, <a href="https://www.youtube.com/watch?v={{ video_id }}" target="_blank" rel="noopener noreferrer">watch it on YouTube ↗</a>.</p>
+  </section>
+  {% endif %}
+
+  <section class="card">
+    <h2 style="color:var(--text-gold)">Catalog record</h2>
+    {% if record.source_name == 'Central Institute of Classical Tamil (CICT) Digital Archive' %}
+    <p class="work-intro">CICT collection: {{ record.collection }} · {{ record.source_institution_count }} source institution(s) · {{ record.pothi_bundle_count }} pothi bundles.</p>
+    {% else %}
+    <p class="work-intro">{{ record.publisher }}{% if record.publication_year %} · {{ record.publication_year }}{% endif %}{% if record.holding_institution %}<br/>Held by: {{ record.holding_institution }}{% endif %}</p>
+    {% endif %}
+    <div class="work-actions">
+      <a href="{{ record.source_url }}" class="btn-primary" target="_blank" rel="noopener noreferrer">{% if record.source_name == 'Central Institute of Classical Tamil (CICT) Digital Archive' %}Open CICT archive ↗{% else %}Open Tamil Digital Library record ↗{% endif %}</a>
+      <a href="/repository" class="btn-secondary">Back to literature map</a>
+    </div>
+  </section>
+</main>
+
+{% include "partials/footer.html" %}
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>API Docs — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    .endpoint { background:rgba(10, 8, 5, 0.85); border:1px solid var(--border-gold); border-radius:12px; padding:1.25rem; margin-bottom:1.25rem; }
+    .method   { display:inline-block; padding:0.25rem 0.65rem; border-radius:6px; font-size:0.8rem; font-weight:800; margin-right:0.6rem; }
+    .get  { background:rgba(16, 185, 129, 0.2); color:#34d399; border:1px solid rgba(16, 185, 129, 0.4); }
+    .post { background:rgba(59, 130, 246, 0.2); color:#60a5fa; border:1px solid rgba(59, 130, 246, 0.4); }
+    .url  { font-family:monospace; font-size:1rem; color:var(--text-gold); font-weight:600; }
+    pre   { background:#060504; color:#f8fafc; padding:1.2rem; border-radius:8px; overflow-x:auto; font-size:0.85rem; margin-top:0.85rem; border:1px solid rgba(255,255,255,0.08); }
+  </style>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">📡 REST API Endpoint Documentation</h2>
+    <p style="color:var(--text-muted)">Base URL: <code style="color:var(--text-gold)">http://localhost:5000</code></p>
+  </div>
+
+  <div class="card">
+
+    <div class="endpoint">
+      <span class="method post">POST</span>
+      <span class="url">/api/process</span>
+      <p style="margin-top:0.6rem;font-size:0.92rem;color:var(--text-muted)">Executes full AI pipeline: image upload → OpenCV pre-processing → U-Net restoration → Tesseract OCR → text cleaning → stroke classification → knowledge extraction → database storage.</p>
+      <strong style="color:var(--text-gold);display:block;margin-top:0.6rem">Form Data Parameters:</strong>
+      <pre>image     : (file) manuscript image file (PNG/JPG/BMP/TIFF)
+title     : (string) manuscript title
+location  : (string) discovery site location
+latitude  : (float, optional) GPS latitude
+longitude : (float, optional) GPS longitude</pre>
+      <strong style="color:var(--text-gold);display:block;margin-top:0.6rem">JSON Response Payload:</strong>
+      <pre>{
+  "id": 1,
+  "original": "data:image/png;base64,...",
+  "preprocessed": "data:image/png;base64,...",
+  "restored": "data:image/png;base64,...",
+  "raw_text": "...",
+  "clean_text": "...",
+  "text_diff": { "raw_chars": 120, "clean_chars": 95, "removed_chars": 25, "raw_lines": 5, "clean_lines": 4 },
+  "classification": { "style": "Dense Script", "period": "Chola (9th–13th Century CE)", "confidence": 0.88 },
+  "knowledge": { "category": "Medicine", "dynasty": "Chola", "period": "9th–13th Century CE", "tags": [...] }
+}</pre>
+    </div>
+
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="url">/api/manuscript/&lt;id&gt;</span>
+      <p style="margin-top:0.6rem;font-size:0.92rem;color:var(--text-muted)">Retrieve full manuscript record by unique ID, including linked artifacts and knowledge tags.</p>
+      <pre>GET /api/manuscript/1</pre>
+    </div>
+
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="url">/api/search?q=&amp;category=&amp;dynasty=</span>
+      <p style="margin-top:0.6rem;font-size:0.92rem;color:var(--text-muted)">Search catalog by Tamil text keywords, manuscript title, category, or dynasty filters.</p>
+      <pre>GET /api/search?q=மருந்து&category=Medicine&dynasty=Chola</pre>
+    </div>
+
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="url">/api/analytics</span>
+      <p style="margin-top:0.6rem;font-size:0.92rem;color:var(--text-muted)">Returns quantitative statistical metrics grouped by category, dynasty, and historical period.</p>
+      <pre>{ "total": 32, "by_category": [...], "by_dynasty": [...], "by_period": [...] }</pre>
+    </div>
+
+    <div class="endpoint">
+      <span class="method get">GET</span>
+      <span class="url">/api/locations</span>
+      <p style="margin-top:0.6rem;font-size:0.92rem;color:var(--text-muted)">Returns manuscript discovery sites with GPS latitude/longitude for Leaflet map rendering.</p>
+      <pre>[{ "id": 1, "title": "...", "location": "...", "latitude": 10.7870, "longitude": 79.1378, "category": "Medicine" }]</pre>
+    </div>
+
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="max-width:900px;padding-top:2rem">
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">👤 User Profile &amp; Research Workspace</h2>
+    <a href="/logout" class="btn-secondary" style="color:var(--red-glow);border-color:var(--red-glow)">🚪 Logout</a>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <h3>📋 Account Details</h3>
+    <table class="meta-table">
+      <tr><td>Username</td><td><strong>{{ user.username }}</strong></td></tr>
+      <tr><td>Email</td><td>{{ user.email }}</td></tr>
+      <tr><td>Role Category</td><td><span class="badge cat-philosophy">{{ user.role }}</span></td></tr>
+      <tr><td>Status</td><td><span class="badge cat-medicine">Active Researcher</span></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>📜 Recent User Activity &amp; Ingestion History</h3>
+    {% if logs %}
+    <table class="meta-table">
+      <thead><tr><th>Action</th><th>Details</th><th>Timestamp</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td><strong style="color:var(--text-gold)">{{ log.action }}</strong></td>
+          <td>{{ log.details }}</td>
+          <td><code>{{ log.timestamp[:16] }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">No recent action logs recorded for this account.</p>
+    {% endif %}
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+</body>
+</html>

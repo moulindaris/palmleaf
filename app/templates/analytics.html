@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analytics — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:0.75rem; }
+    .stat-card { background:var(--bg-card); border:1px solid var(--border-gold); border-radius:10px; padding:1rem; text-align:center; }
+    .stat-card strong { display:block; color:var(--text-gold); font-size:1.45rem; }
+    .stat-card span { color:var(--text-muted); font-size:.8rem; }
+  </style>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">📊 Analytics &amp; Statistical Dashboard</h2>
+    <p style="color:var(--text-muted)">Repository records, including clearly marked catalog examples: <strong>{{ data.total }}</strong></p>
+  </div>
+
+  <div class="stats-row" style="margin-bottom:1.5rem">
+    <div class="stat-card"><strong>{{ data.total }}</strong><span>Repository Records</span></div>
+    <div class="stat-card"><strong>{{ data.total_images }}</strong><span>Images</span></div>
+    <div class="stat-card"><strong>{{ data.total_scripts }}</strong><span>Script Styles</span></div>
+    <div class="stat-card"><strong>{{ data.total_locations }}</strong><span>Locations</span></div>
+    <div class="stat-card"><strong>{{ data.total_artifacts }}</strong><span>Artifacts</span></div>
+    <div class="stat-card"><strong>{{ data.total_tags }}</strong><span>Knowledge Tags</span></div>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <h3>🎯 Model-confidence coverage</h3>
+    <p style="color:var(--text-muted);margin:0">
+      {% if data.average_classification_confidence is not none %}
+      Average script-classification confidence: <strong style="color:var(--text-gold)">{{ (data.average_classification_confidence * 100)|round(1) }}%</strong>.
+      {% else %}
+      No classification-confidence values have been recorded yet.
+      {% endif %}
+      OCR confidence will appear here once it is saved by the database integration.
+    </p>
+  </div>
+
+  <div class="analytics-grid">
+
+    <div class="card chart-card">
+      <h3>📂 Subject Distribution</h3>
+      <canvas id="catChart"></canvas>
+    </div>
+
+    <div class="card chart-card">
+      <h3>🏛️ Dynasty Breakdown</h3>
+      <canvas id="dynChart"></canvas>
+    </div>
+
+    <div class="card chart-card">
+      <h3>📅 Historical Timeline</h3>
+      <canvas id="perChart"></canvas>
+    </div>
+
+    <div class="card chart-card">
+      <h3>✍️ Script-style Distribution</h3>
+      <canvas id="scriptChart"></canvas>
+    </div>
+
+    <div class="card chart-card">
+      <h3>🎯 Classification-confidence Distribution</h3>
+      <canvas id="confidenceChart"></canvas>
+    </div>
+
+  </div>
+
+  <!-- Summary Table -->
+  <div class="card" style="margin-top:1.5rem">
+    <h3>📋 Quantitative Breakdown</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem">
+      <div>
+        <h4 style="color:var(--text-gold)">Categories</h4>
+        <table class="meta-table">
+          <thead><tr><th>Category</th><th>Digitized Manuscripts</th></tr></thead>
+          <tbody>
+            {% for row in data.by_category %}
+            <tr><td><span class="badge cat-{{ row.category|lower }}">{{ row.category }}</span></td><td>{{ row.count }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h4 style="color:var(--text-gold)">Dynasties</h4>
+        <table class="meta-table">
+          <thead><tr><th>Dynasty</th><th>Count</th></tr></thead>
+          <tbody>
+            {% for row in data.by_dynasty %}
+            <tr><td>{{ row.dynasty }}</td><td>{{ row.count }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+{% include "partials/footer.html" %}
+
+<script>
+const COLORS = ["#f59e0b", "#34d399", "#60a5fa", "#c084fc", "#f87171", "#f472b6", "#a3937d"];
+
+function makeChart(id, labels, values, type="bar") {
+  new Chart(document.getElementById(id), {
+    type,
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: COLORS.slice(0, labels.length),
+        borderRadius: 8,
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: "#a3937d", font: { family: "Outfit" } }, display: type === "doughnut" }
+      },
+      scales: type !== "doughnut" ? {
+        y: { beginAtZero: true, ticks: { color: "#a3937d", stepSize: 1 }, grid: { color: "rgba(217, 119, 6, 0.15)" } },
+        x: { ticks: { color: "#a3937d" }, grid: { display: false } }
+      } : {}
+    }
+  });
+}
+
+const catData = {{ data.by_category | tojson }};
+const dynData = {{ data.by_dynasty  | tojson }};
+const perData = {{ data.by_period   | tojson }};
+const scriptData = {{ data.by_script | tojson }};
+const confidenceData = {{ data.confidence_distribution | tojson }};
+
+makeChart("catChart", catData.map(r=>r.category), catData.map(r=>r.count), "bar");
+makeChart("dynChart", dynData.map(r=>r.dynasty),  dynData.map(r=>r.count), "doughnut");
+makeChart("perChart", perData.map(r=>r.period),   perData.map(r=>r.count), "bar");
+makeChart("scriptChart", scriptData.map(r=>r.script), scriptData.map(r=>r.count), "doughnut");
+makeChart("confidenceChart", confidenceData.map(r=>r.range), confidenceData.map(r=>r.count), "bar");
+</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Repository — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    .learning-map { margin:1.5rem 0 2.5rem; padding:1.35rem; border:1px solid var(--border-gold); border-radius:var(--radius-md); background:linear-gradient(145deg,rgba(44,134,133,.11),rgba(10,8,5,.72)); }
+    .learning-map-intro { max-width:780px; color:var(--text-muted); }
+    .learning-root { width:max-content; max-width:100%; margin:1.25rem auto 1.4rem; padding:.7rem 1.2rem; border:1px solid var(--gold-light); border-radius:999px; text-align:center; color:var(--text-gold); font-weight:700; background:rgba(234,184,101,.1); }
+    .learning-routes { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
+    .learning-route { position:relative; padding:1rem; border:1px solid rgba(140,219,210,.24); border-radius:14px; background:rgba(6,13,16,.5); }
+    .learning-route:before { content:""; position:absolute; height:1.3rem; border-left:1px solid rgba(234,184,101,.55); top:-1.35rem; left:50%; }
+    .learning-route h3 { color:var(--text-main); font-size:1rem; margin:.3rem 0 .4rem; }
+    .learning-route p { color:var(--text-muted); font-size:.85rem; margin:0 0 .8rem; }
+    .learning-level { color:var(--text-gold); font-size:.68rem; font-weight:700; letter-spacing:.1em; }
+    .learning-work { padding:.65rem 0; border-top:1px solid rgba(255,255,255,.08); }
+    .learning-work strong,.learning-work small { display:block; }
+    .learning-work strong { color:var(--text-main); }
+    .learning-work small { color:var(--text-muted); margin:.2rem 0; line-height:1.4; }
+    .learning-work a { font-size:.8rem; color:#a7eee6; }
+    .archive-overview { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:.8rem; margin:1.25rem 0 2rem; }
+    .archive-stat { padding:1rem 1.1rem; border:1px solid var(--border-gold); border-radius:12px; background:rgba(18,14,10,.72); }
+    .archive-stat strong,.archive-stat span { display:block; }
+    .archive-stat strong { color:var(--text-gold); font-size:1.35rem; }
+    .archive-stat span { color:var(--text-muted); font-size:.82rem; }
+    .archive-filter { display:grid; grid-template-columns:minmax(220px,2fr) minmax(190px,1fr) auto; gap:.7rem; align-items:center; margin:1rem 0; }
+    .archive-filter input,.archive-filter select { width:100%; min-height:44px; }
+    .archive-filter-count { color:var(--text-muted); font-size:.85rem; white-space:nowrap; }
+    .archive-record-card[hidden] { display:none !important; }
+    .heritage-sources { margin-top:2.5rem; padding:1.35rem; border:1px solid rgba(140,219,210,.26); border-radius:var(--radius-md); background:linear-gradient(145deg,rgba(44,134,133,.12),rgba(10,8,5,.72)); }
+    .heritage-sources > p { color:var(--text-muted); max-width:800px; margin:.3rem 0 1rem; }
+    .source-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:.8rem; }
+    .source-card { display:block; padding:1rem; border:1px solid rgba(255,255,255,.10); border-radius:12px; background:rgba(6,13,16,.46); color:var(--text-main); text-decoration:none; transition:transform .2s ease,border-color .2s ease; }
+    .source-card:hover { transform:translateY(-2px); border-color:rgba(140,219,210,.58); }
+    .source-card strong,.source-card small { display:block; }
+    .source-card strong { color:#a7eee6; margin-bottom:.3rem; }
+    .source-card small { color:var(--text-muted); line-height:1.45; }
+    @media(max-width:640px) { .learning-route:before { display:none; } .archive-filter { grid-template-columns:1fr; } .archive-filter-count { white-space:normal; } }
+  </style>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">📚 Manuscript Repository</h2>
+    <p style="color:var(--text-muted)">{{ manuscripts|length }} digitized manuscript record(s) · {{ catalog_records|length }} Tamil Digital Library records · {{ cict_catalog_records|length }} CICT classical-work listings</p>
+  </div>
+
+  <section class="archive-overview" aria-label="Repository collection summary">
+    <div class="archive-stat"><strong>{{ manuscripts|length }}</strong><span>Manuscripts digitized in this project</span></div>
+    <div class="archive-stat"><strong>{{ cict_catalog_records|length }}</strong><span>CICT classical-work listings</span></div>
+    <div class="archive-stat"><strong>{{ catalog_records|length }}</strong><span>Tamil Digital Library catalog records</span></div>
+  </section>
+
+  <section class="learning-map" aria-labelledby="learningMapTitle">
+    <h2 id="learningMapTitle" style="font-family:'Cinzel',serif;color:var(--text-gold);font-size:1.45rem">🧭 Where to start: Tamil literature map</h2>
+    <p class="learning-map-intro">Choose a route that interests you. Start with short works, then branch into Sangam poetry, epics, or devotional writing. Each title links to its Tamil Digital Library record when available.</p>
+    <div class="learning-root">Tamil Literature · தமிழ் இலக்கியம்</div>
+    <div class="learning-routes">
+      {% for route in learning_routes %}
+      <article class="learning-route">
+        <span class="learning-level">{{ route.level }}</span>
+        <h3>{{ route.title }}</h3>
+        <p>{{ route.description }}</p>
+        {% for work in route.works %}
+        <div class="learning-work">
+          <strong>{{ work.tamil_title }} <span class="english-companion" style="font-weight:400;color:var(--text-muted)">· {{ work.english_title }}</span></strong>
+          <small>{{ work.description }}</small>
+          {% if work.source_id %}<a href="{{ url_for('literature_detail', source_id=work.source_id) }}">Open introduction and source ↗</a>{% else %}<small>Source record is not in the imported catalog yet.</small>{% endif %}
+        </div>
+        {% endfor %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if manuscripts %}
+  <div class="repo-grid">
+    {% for m in manuscripts %}
+    <a href="/manuscript/{{ m.id }}" class="repo-card">
+      {% if m.demo_record %}
+      <div class="no-img" aria-label="Catalog example; no manuscript scan attached">📜<small style="display:block;font-size:.75rem">Catalog example · no scan</small></div>
+      {% elif m.original_path and m.original_path.startswith('http') %}
+      <img src="{{ m.original_path }}" alt="Manuscript" onerror="this.src='/uploads/{{ m.filename }}'"/>
+      {% elif m.restored_path %}
+      <img src="/uploads/{{ m.filename.rsplit('.',1)[0] }}_res.png"
+           onerror="this.src='/uploads/{{ m.filename }}'" alt="Manuscript"/>
+      {% else %}
+      <div class="no-img">🏺</div>
+      {% endif %}
+      <div class="repo-info">
+        <h4>{{ m.title }}</h4>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+          <span class="badge cat-{{ m.category|lower }}">{{ m.category }}</span>
+          <span class="badge">{{ m.dynasty }}</span>
+        </div>
+        <p class="repo-meta">📍 {{ m.location }} &nbsp;|&nbsp; 🕐 {{ m.created_at[:10] }}</p>
+        {% if m.demo_record %}
+        <p class="repo-style">CICT catalog · {{ m.source_institution_count }} source institutions · {{ m.pothi_bundle_count }} pothi bundles</p>
+        <span class="dl-btn">View source details ↗</span>
+        {% else %}
+        <p class="repo-style">Style: <strong>{{ m.style }}</strong> ({{ (m.confidence * 100)|int }}% confidence)</p>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>📭 No digitized manuscripts have been added yet.</p>
+    <p style="color:var(--text-muted);margin-top:.35rem">Add a scan to preserve the original and make its text easier to explore.</p>
+    <a href="/#digitize" class="btn-primary" style="margin-top:1rem">📤 Add a manuscript</a>
+  </div>
+  {% endif %}
+
+  {% if cict_catalog_records %}
+  <section style="margin-top:2.5rem">
+    <div class="page-header">
+      <h2 style="font-family:'Cinzel',serif;color:var(--text-gold);font-size:1.5rem">🏛️ CICT Classical Tamil Archive</h2>
+      <p style="color:var(--text-muted)">Browse the classical works by collection or search across both connected catalogs. These are source-linked catalog records; manuscript images and full texts remain with their archives.</p>
+    </div>
+    <div class="archive-filter" role="search" aria-label="Filter archive records">
+      <input id="archiveSearch" type="search" class="search-input" placeholder="Search title, subject, or collection…" aria-label="Search catalog records"/>
+      <select id="archiveFacet" aria-label="Filter by collection or subject">
+        <option value="">All collections and subjects</option>
+        {% for facet in catalog_facets %}<option value="{{ facet|lower }}">{{ facet }}</option>{% endfor %}
+      </select>
+      <span id="archiveFilterCount" class="archive-filter-count" aria-live="polite"></span>
+    </div>
+    <div class="repo-grid">
+      {% for record in cict_catalog_records %}
+      <a href="{{ url_for('literature_detail', source_id=record.source_id) }}" class="repo-card archive-record-card" data-facet="{{ record.collection|lower }}">
+        <div class="no-img">📜</div>
+        <div class="repo-info">
+          <h4>{{ record.title }}</h4>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <span class="badge">{{ record.collection }}</span>
+            <span class="badge">CICT work listing</span>
+          </div>
+          <p class="repo-meta">{{ record.source_institution_count }} source institution(s) · {{ record.pothi_bundle_count }} pothi bundle(s)</p>
+          <span class="dl-btn">View listing and source details ↗</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if catalog_records %}
+  <section style="margin-top:2.5rem">
+    <div class="page-header">
+      <h2 style="font-family:'Cinzel',serif;color:var(--text-gold);font-size:1.5rem">📜 Tamil Digital Library Records</h2>
+      <p style="color:var(--text-muted)">Literary listings and manuscript catalog references with links to their Tamil Digital Library source pages. Full texts and scans remain at the source.</p>
+    </div>
+    <div class="repo-grid">
+      {% for record in catalog_records %}
+      {% if record.record_type == 'literary_work' %}
+      <a href="{{ url_for('literature_detail', source_id=record.source_id) }}" class="repo-card archive-record-card" data-facet="{{ (record.subject or record.record_type)|lower }}">
+      {% else %}
+      <a href="{{ record.source_url }}" class="repo-card archive-record-card" data-facet="{{ (record.subject or record.record_type)|lower }}" target="_blank" rel="noopener noreferrer">
+      {% endif %}
+        <div class="no-img">📚</div>
+        <div class="repo-info">
+          <h4>{{ record.title }}</h4>
+          <span class="badge">{% if record.record_type == 'literary_work' %}Literary listing{% else %}Manuscript catalog reference{% endif %}</span>
+          {% if record.author %}<p class="repo-meta">Author: {{ record.author }}</p>{% endif %}
+          <p class="repo-meta">{{ record.publisher }}{% if record.publication_year %} · {{ record.publication_year }}{% endif %}</p>
+          {% if record.page_count or record.series %}
+          <p class="repo-meta">{% if record.page_count %}{{ record.page_count }} pages{% endif %}{% if record.page_count and record.series %} · {% endif %}{{ record.series or '' }}</p>
+          {% endif %}
+          {% if record.holding_institution %}<p class="repo-meta">Held by: {{ record.holding_institution }}</p>{% endif %}
+          <span class="dl-btn">{% if record.record_type == 'literary_work' %}Open introduction ↗{% else %}Open source record ↗{% endif %}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="heritage-sources" aria-labelledby="heritageSourcesTitle">
+    <h2 id="heritageSourcesTitle" style="font-family:'Cinzel',serif;color:var(--text-gold);font-size:1.35rem">🌐 Trusted online heritage sources</h2>
+    <p>Continue your research with official digital collections and archaeology resources. These links open in a new tab; records and images remain with their source institutions.</p>
+    <div class="source-grid">
+      <a class="source-card" href="https://www.digitalarchives.cict.in/" target="_blank" rel="noopener noreferrer">
+        <strong>CICT Digital Archive ↗</strong>
+        <small>Digital palm-leaf manuscripts, classical Tamil texts, and manuscript OCR resources.</small>
+      </a>
+      <a class="source-card" href="https://www.tamilvu.org/en/library" target="_blank" rel="noopener noreferrer">
+        <strong>Tamil Virtual Academy Library ↗</strong>
+        <small>Government-supported Tamil Virtual Library and Manuscripts Gallery.</small>
+      </a>
+      <a class="source-card" href="https://www.tnarch.gov.in/tamil-brahmi-script" target="_blank" rel="noopener noreferrer">
+        <strong>Tamil Nadu Archaeology ↗</strong>
+        <small>Official Tamil-Brahmi script information and archaeological evidence.</small>
+      </a>
+    </div>
+  </section>
+</main>
+
+<script>
+  (() => {
+    const search = document.getElementById("archiveSearch");
+    const facet = document.getElementById("archiveFacet");
+    const count = document.getElementById("archiveFilterCount");
+    const cards = [...document.querySelectorAll(".archive-record-card")];
+    if (!search || !facet || !count) return;
+    const filter = () => {
+      const query = search.value.trim().toLocaleLowerCase();
+      const selectedFacet = facet.value;
+      let visible = 0;
+      cards.forEach(card => {
+        const matches = (!query || card.textContent.toLocaleLowerCase().includes(query)) &&
+          (!selectedFacet || card.dataset.facet === selectedFacet);
+        card.hidden = !matches;
+        if (matches) visible += 1;
+      });
+      count.textContent = `Showing ${visible} of ${cards.length} catalog records`;
+    };
+    search.addEventListener("input", filter);
+    facet.addEventListener("change", filter);
+    filter();
+  })();
+</script>
+
+{% include "partials/footer.html" %}
+</body>
+</html>

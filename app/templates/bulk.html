@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bulk Upload — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">📦 Batch Manuscript Ingestion</h2>
+    <p style="color:var(--text-muted)">Upload and process multiple palm-leaf manuscript images concurrently</p>
+  </div>
+
+  <div class="card">
+    <form id="bulkForm" enctype="multipart/form-data">
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label>Default Discovery Location (applied to batch)</label>
+        <input type="text" name="location" placeholder="e.g. Thanjavur Saraswathi Mahal Library"/>
+      </div>
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label>Select Manuscript Images (multiple)</label>
+        <label class="file-label" style="width:100%">
+          <span id="bulkLabel">📂 Click or Drag Multiple Manuscript Files (Ctrl / Cmd + Click)</span>
+          <input type="file" id="bulkInput" name="images" accept="image/*" multiple required/>
+        </label>
+      </div>
+      <button type="submit" id="bulkBtn" class="btn-primary">🚀 Execute Batch AI Pipeline</button>
+    </form>
+
+    <div id="bulkProgress" class="progress-bar hidden" style="margin-top:1.25rem">
+      <div class="progress-fill"></div>
+    </div>
+    <p id="bulkStatus" class="status-msg" style="margin-top:0.6rem"></p>
+  </div>
+
+  <!-- Results Table -->
+  <div id="bulkResults" class="card hidden" style="margin-top:1.5rem">
+    <h3>📋 Batch Processing Output</h3>
+    <table class="meta-table" id="resultsTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Filename</th><th>Category</th>
+          <th>Dynasty</th><th>Script Style</th><th>Record Link</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+
+<script>
+const bulkInput  = document.getElementById("bulkInput");
+const bulkLabel  = document.getElementById("bulkLabel");
+const bulkForm   = document.getElementById("bulkForm");
+const bulkBtn    = document.getElementById("bulkBtn");
+const bulkStatus = document.getElementById("bulkStatus");
+const bulkProg   = document.getElementById("bulkProgress");
+const bulkRes    = document.getElementById("bulkResults");
+const tbody      = document.getElementById("resultsBody");
+
+bulkInput?.addEventListener("change", () => {
+  bulkLabel.textContent = bulkInput.files.length
+    ? `✅ ${bulkInput.files.length} manuscript file(s) selected`
+    : "📂 Click or Drag Multiple Manuscript Files";
+});
+
+bulkForm?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const files    = bulkInput.files;
+  const location = bulkForm.querySelector("[name=location]").value || "Unknown";
+  if (!files.length) return;
+
+  bulkBtn.disabled = true;
+  bulkProg.classList.remove("hidden");
+  bulkRes.classList.add("hidden");
+  tbody.innerHTML = "";
+  let done = 0;
+
+  for (const file of files) {
+    bulkStatus.textContent = `⏳ Processing manuscript ${done + 1} of ${files.length}: ${file.name}`;
+    const fd = new FormData();
+    fd.append("image", file);
+    fd.append("title", file.name.replace(/\.[^.]+$/, ""));
+    fd.append("location", location);
+
+    try {
+      const res  = await fetch("/api/process", { method: "POST", body: fd });
+      const data = await res.json();
+      const row  = document.createElement("tr");
+      if (data.error) {
+        row.innerHTML = `<td>${done+1}</td><td>${file.name}</td>
+          <td colspan="3" style="color:var(--red-glow)">❌ ${data.error}</td><td>—</td>`;
+      } else {
+        row.innerHTML = `
+          <td>${done+1}</td>
+          <td>${file.name}</td>
+          <td><span class="badge cat-${data.knowledge.category.toLowerCase()}">${data.knowledge.category}</span></td>
+          <td>${data.knowledge.dynasty}</td>
+          <td>${data.classification.style}</td>
+          <td><a href="/manuscript/${data.id}" class="btn-secondary" style="font-size:0.8rem">View Detail →</a></td>`;
+      }
+      tbody.appendChild(row);
+    } catch (err) {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${done+1}</td><td>${file.name}</td>
+        <td colspan="3" style="color:var(--red-glow)">❌ ${err.message}</td><td>—</td>`;
+      tbody.appendChild(row);
+    }
+    done++;
+  }
+
+  bulkStatus.textContent = `✅ Batch Complete! ${done} manuscript(s) cataloged into system.`;
+  bulkProg.classList.add("hidden");
+  bulkRes.classList.remove("hidden");
+  bulkBtn.disabled = false;
+});
+</script>
+</body>
+</html>

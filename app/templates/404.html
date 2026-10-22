@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>404 — Scroll Not Found | PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:4rem;text-align:center;max-width:600px">
+  <div class="card" style="padding:3rem 2rem">
+    <div style="font-size:4.5rem;margin-bottom:1rem">🏺</div>
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold);font-size:2rem;margin-bottom:0.5rem">404 — This record is missing</h2>
+    <p style="color:var(--text-muted);font-size:1rem;margin-bottom:2rem">
+      We couldn’t find that page in the archive. Check the address, or head back to browse the manuscripts.
+    </p>
+    <a href="/repository" class="btn-primary" style="padding:0.85rem 2rem;font-size:1rem">📚 Browse the archive</a>
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+</body>
+</html>

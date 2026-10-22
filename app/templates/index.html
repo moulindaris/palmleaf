@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tamil Palm-Leaf Manuscript Digitizer &amp; AI Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    .hero-eyebrow {
+      display:inline-flex; align-items:center; gap:.55rem; padding:.38rem .78rem; border-radius:999px;
+      border:1px solid rgba(140,219,210,.38); background:rgba(44,134,133,.13); color:#a7eee6;
+      font-size:.73rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    }
+    .hero-badges {
+      display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; margin-top: 1.25rem;
+    }
+    .hero-badge {
+      background: rgba(245, 158, 11, 0.1); border: 1px solid var(--border-gold);
+      color: var(--text-gold); padding: 0.35rem 0.9rem; border-radius: 20px;
+      font-size: 0.85rem; font-weight: 600; backdrop-filter: blur(8px);
+    }
+    .feature-bar {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem; margin-bottom: 2rem;
+    }
+    .feature-card {
+      background: var(--bg-card); border: 1px solid var(--border-gold);
+      border-radius: var(--radius-md); padding: 1.25rem; text-align: center;
+      transition: all 0.3s ease; text-decoration: none; color: inherit;
+    }
+    .feature-card:hover {
+      border-color: var(--gold-light); transform: translateY(-4px);
+      box-shadow: var(--gold-glow);
+    }
+    .feature-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
+    .feature-title { font-family: 'Cinzel', serif; font-weight: 700; color: var(--text-gold); font-size: 1rem; }
+    .feature-desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem; }
+    .hero-actions { display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1.6rem; }
+    .hero-metrics { display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:2.2rem; }
+    .hero-metric { padding-left:.9rem; border-left:1px solid rgba(234,184,101,.45); }
+    .hero-metric strong { display:block; color:var(--text-main); font-size:1.05rem; }
+    .hero-metric span { color:var(--text-muted); font-size:.75rem; }
+    .upload-helper { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin:.3rem 0 1rem; color:var(--text-muted); font-size:.82rem; }
+    .upload-preview { display:none; align-items:center; gap:.85rem; margin-top:1rem; padding:.75rem; text-align:left; border:1px solid rgba(140,219,210,.25); border-radius:12px; background:rgba(6,13,16,.36); }
+    .upload-preview.visible { display:flex; }
+    .upload-preview img { width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,255,255,.14); }
+    .upload-preview strong, .upload-preview small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:290px; }
+    .upload-preview small { color:var(--text-muted); margin-top:.12rem; }
+    .pipeline-steps { display:flex; gap:.55rem; flex-wrap:wrap; margin:1.1rem 0 0; }
+    .pipeline-step { display:inline-flex; align-items:center; gap:.42rem; color:var(--text-dim); font-size:.77rem; padding:.36rem .62rem; border-radius:999px; background:rgba(255,255,255,.035); border:1px solid transparent; }
+    .pipeline-step.active { color:#a7eee6; border-color:rgba(140,219,210,.36); background:rgba(44,134,133,.12); }
+    .pipeline-step.complete { color:var(--gold-light); }
+    .model-note { color:var(--text-dim); font-size:.76rem; text-align:right; }
+    .modern-tamil-panel { margin-top:1.2rem; padding:1.1rem; border:1px solid rgba(140,219,210,.32); border-radius:14px; background:rgba(44,134,133,.09); }
+    .modern-tamil-header { display:flex; align-items:flex-start; justify-content:space-between; gap:.8rem; flex-wrap:wrap; }
+    .modern-tamil-header h4 { color:#a7eee6; margin:0; }
+    .suggestion-badge { padding:.28rem .6rem; border-radius:999px; background:rgba(234,184,101,.16); border:1px solid rgba(234,184,101,.35); color:var(--gold-light); font-size:.75rem; font-weight:700; }
+    .modern-tamil-text { margin-top:.75rem; min-height:70px; }
+    .modern-tamil-notice { margin:.7rem 0 0; color:var(--text-muted); font-size:.82rem; }
+    .modern-changes { display:flex; gap:.45rem; flex-wrap:wrap; margin-top:.8rem; }
+    .modern-change { padding:.3rem .55rem; border-radius:8px; background:rgba(6,13,16,.46); border:1px solid rgba(255,255,255,.10); color:var(--text-muted); font-size:.8rem; }
+    .modern-change b { color:#a7eee6; }
+    .upload-mode { display:flex; gap:.65rem; flex-wrap:wrap; margin:0 0 1rem; }
+    .upload-mode label { display:flex; align-items:center; gap:.45rem; padding:.55rem .8rem; border:1px solid var(--border-gold); border-radius:10px; cursor:pointer; }
+    .upload-mode input { accent-color:var(--gold-light); }
+    @media (max-width:640px) { .upload-helper { align-items:flex-start; flex-direction:column; gap:.35rem; } .model-note { text-align:left; } }
+  </style>
+</head>
+<body>
+
+{% include "partials/nav.html" %}
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">✦ Digital heritage workspace</div>
+    <h1>Preserve every<br/>palm-leaf story.</h1>
+    <h2>Tamil Manuscript Digitizer &amp; Analysis System</h2>
+    <p>Restore fragile manuscripts, extract Tamil text, and connect each record to the people, places, and history behind it.</p>
+
+    <div class="hero-actions">
+      <a href="#digitize" class="btn-primary">Start digitizing <span>→</span></a>
+      <a href="/repository" class="btn-secondary">Explore repository</a>
+    </div>
+
+    <div class="hero-badges">
+      <span class="hero-badge">✨ PyTorch U-Net Restorer</span>
+      <span class="hero-badge">📜 Tesseract Tamil OCR</span>
+      <span class="hero-badge">🏛️ Script &amp; Dynasty Classification</span>
+      <span class="hero-badge">🗺️ Dual Map Visualization</span>
+    </div>
+    <div class="hero-metrics">
+      <div class="hero-metric"><strong>AI-assisted</strong><span>image restoration</span></div>
+      <div class="hero-metric"><strong>Tamil-first</strong><span>OCR and cleaning</span></div>
+      <div class="hero-metric"><strong>Research-ready</strong><span>historical context</span></div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Feature Quick Launch Bar -->
+  <div class="feature-bar">
+    <a href="/repository" class="feature-card">
+      <div class="feature-icon">📚</div>
+      <div class="feature-title">Digital Repository</div>
+      <div class="feature-desc">Browse digitized records and their historical context.</div>
+    </a>
+    <a href="/search" class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <div class="feature-title">Semantic Search</div>
+      <div class="feature-desc">Filter by dynasty, subject category &amp; Tamil keywords</div>
+    </a>
+    <a href="/map" class="feature-card">
+      <div class="feature-icon">🗺️</div>
+      <div class="feature-title">Dual Side-by-Side Map</div>
+      <div class="feature-desc">Compare ancient discovery origin vs. modern archive</div>
+    </a>
+    <a href="/analytics" class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Analytics Dashboard</div>
+      <div class="feature-desc">Explore category charts, script styles &amp; ML stats</div>
+    </a>
+  </div>
+
+  <!-- Upload Form -->
+  <section class="card upload-card" id="digitize">
+    <h3>📤 Bring a manuscript into the archive</h3>
+    <p style="color:var(--text-muted);font-size:.92rem;margin:-.45rem 0 1.35rem">Upload an image or PDF. Title and location are optional; a blank title uses the file name, and an unknown location is saved as “Not recorded.” PDFs are preserved in full; the first page is analyzed.</p>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <fieldset style="border:0;padding:0;margin:0 0 1rem">
+        <legend style="font-weight:600;margin-bottom:.55rem">How many files are you uploading?</legend>
+        <div class="upload-mode">
+          <label><input type="radio" name="uploadMode" value="single" checked/> One file</label>
+          <label><input type="radio" name="uploadMode" value="multiple"/> Multiple files</label>
+        </div>
+      </fieldset>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="manuscriptTitle">Manuscript title</label>
+          <input id="manuscriptTitle" type="text" name="title" placeholder="Blank uses the uploaded file name"/>
+        </div>
+        <div class="form-group">
+          <label for="discoveryLocation">Discovery location</label>
+          <input id="discoveryLocation" type="text" name="location" placeholder="Optional · e.g. Thanjavur, Tamil Nadu"/>
+        </div>
+        <div class="form-group">
+          <label for="latitude">Latitude (optional)</label>
+          <input type="number" step="any" name="latitude" placeholder="e.g. 10.7870" />
+        </div>
+        <div class="form-group">
+          <label for="longitude">Longitude (optional)</label>
+          <input type="number" step="any" name="longitude" placeholder="e.g. 79.1378" />
+        </div>
+      </div>
+      <div class="upload-helper">
+        <span>Accepted formats: JPG, PNG, TIFF, BMP, PDF · PDF analysis uses page 1 · Maximum file size: 32 MB</span>
+        <span class="model-note" id="modelStatus" aria-live="polite">Checking AI model availability…</span>
+      </div>
+      <div class="file-row">
+        <label class="file-label" for="imageInput">
+          <span id="fileLabel">📂 Drop Manuscript File Here or Click to Browse</span>
+          <input type="file" id="imageInput" name="image" accept=".jpg,.jpeg,.png,.tif,.tiff,.bmp,.pdf,image/*,application/pdf" required/>
+          <span class="upload-preview" id="uploadPreview">
+            <img id="previewImage" alt="Selected manuscript preview"/>
+            <span><strong id="previewName"></strong><small id="previewMeta"></small></span>
+          </span>
+        </label>
+        <button type="submit" id="submitBtn">✨ Run AI Analysis &amp; Restoration</button>
+      </div>
+    </form>
+    <div id="progressBar" class="progress-bar hidden" role="progressbar" aria-label="Manuscript processing"><div class="progress-fill"></div></div>
+    <p id="statusMsg" class="status-msg" role="status" aria-live="polite"></p>
+    <div id="batchResults" class="hidden" style="margin-top:1rem" aria-live="polite"></div>
+    <div class="pipeline-steps" aria-label="Processing stages">
+      <span class="pipeline-step" data-stage="upload">1 · Upload</span>
+      <span class="pipeline-step" data-stage="restore">2 · Restore image</span>
+      <span class="pipeline-step" data-stage="ocr">3 · Read Tamil text</span>
+      <span class="pipeline-step" data-stage="context">4 · Build context</span>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="results" class="hidden">
+
+    <!-- Phase 1: Images -->
+    <div class="card">
+      <h3>🖼️ Visual Processing Pipeline</h3>
+      <div class="image-grid">
+        <div class="img-card">
+          <h4>📷 Original Manuscript</h4>
+          <img id="imgOriginal" style="display:none" alt="Original Manuscript"/>
+          <a id="dlOriginal" download="original.png" class="dl-btn" style="display:none">⬇ Download High-Res</a>
+        </div>
+        <div class="img-card">
+          <h4>⚙️ OpenCV Denoised</h4>
+          <img id="imgPreprocessed" style="display:none" alt="Preprocessed Manuscript"/>
+          <a id="dlPre" download="preprocessed.png" class="dl-btn" style="display:none">⬇ Download Preprocessed</a>
+        </div>
+        <div class="img-card">
+          <h4>✨ U-Net Restored</h4>
+          <img id="imgRestored" style="display:none" alt="Restored Manuscript"/>
+          <a id="dlRes" download="restored.png" class="dl-btn" style="display:none">⬇ Download Restored</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Script Classification -->
+    <div class="card">
+      <h3>🧠 Stroke Analysis &amp; Script Classification</h3>
+      <div id="classificationResult" class="info-grid"></div>
+    </div>
+
+    <!-- OCR Text Processing -->
+    <div class="card">
+      <h3>📜 Tamil OCR &amp; Rule-Based Character Correction</h3>
+      <div class="text-compare">
+        <div class="text-panel">
+          <h4>Original OCR</h4>
+          <div id="rawText" class="tamil-text"></div>
+        </div>
+        <div class="text-panel">
+          <h4>✅ Corrected Tamil <span id="ocrConfidence" class="suggestion-badge">Awaiting OCR</span></h4>
+          <textarea id="cleanText" class="tamil-text clean tamil-edit" aria-label="Edit corrected Tamil OCR before conversion" placeholder="Corrected Tamil will appear here. You can edit it before conversion."></textarea>
+          <div id="uncertainWords" class="uncertain-words" aria-live="polite"></div>
+          <p id="correctionWarning" class="modern-tamil-notice" role="status"></p>
+          <div style="display:flex;gap:0.75rem;align-items:center;margin-top:0.4rem">
+            <button class="copy-btn" onclick="copyText()">📋 Copy Text</button>
+            <a id="dlText" class="dl-btn" download="extracted_text.txt">⬇ Download TXT</a>
+            <button type="button" class="copy-btn" id="retryOcrButton" disabled>↻ Retry OCR</button>
+          </div>
+        </div>
+      </div>
+      <section class="modern-tamil-panel" aria-labelledby="modernTamilHeading" hidden>
+        <div class="modern-tamil-header">
+          <div>
+            <h4 id="modernTamilHeading">✨ Modern Tamil reading suggestion</h4>
+            <p id="modernTamilNotice" class="modern-tamil-notice">Convert the corrected text to contemporary Tamil. Uncertain source words will be preserved and flagged for review.</p>
+          </div>
+          <span id="modernTamilConfidence" class="suggestion-badge">Awaiting text</span>
+        </div>
+        <div id="modernTamilText" class="tamil-text clean modern-tamil-text">A modern-Tamil suggestion will appear after OCR processing.</div>
+        <div id="modernTamilChanges" class="modern-changes" aria-label="Suggested historical-to-modern changes"></div>
+        <div style="display:flex;gap:.65rem;align-items:center;margin-top:.8rem;flex-wrap:wrap">
+          <button type="button" id="convertModernTamilButton" class="copy-btn">Convert to Modern Tamil</button>
+          <span id="modernTamilLoading" class="modern-tamil-notice" role="status" aria-live="polite"></span>
+        </div>
+      </section>
+      <div id="textStats" class="stats-row" style="margin-top:0.8rem"></div>
+    </div>
+
+    <!-- Knowledge Extraction -->
+    <div class="card">
+      <h3>📚 Historical &amp; Cultural Knowledge Extraction</h3>
+      <div id="knowledgeResult"></div>
+    </div>
+
+    <!-- Save confirmation -->
+    <div class="card save-confirm" style="text-align:center">
+      <p id="saveMsg" style="font-size:1.1rem;color:var(--text-gold);font-weight:700;margin-bottom:1rem"></p>
+      <a id="viewDetailLink" href="#" class="btn-primary hidden" style="display:inline-flex">📖 View Full Record Detail</a>
+    </div>
+
+  </section>
+</main>
+
+{% include "partials/footer.html" %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tamil_tools.js') }}"></script>
+</body>
+</html>
