@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ m.title }} — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .slider-container {
+      position: relative; width: 100%; max-width: 700px; height: 380px;
+      margin: 0 auto; overflow: hidden; border-radius: 12px;
+      border: 1px solid var(--border-gold); background: #000;
+    }
+    .slider-img {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: contain; background: #000;
+    }
+    .img-overlay {
+      position: absolute; top: 0; left: 0; height: 100%; width: 50%;
+      overflow: hidden; border-right: 2px solid var(--text-gold);
+    }
+    .img-overlay img {
+      position: absolute; top: 0; left: 0; height: 100%; width: 700px; max-width: none;
+      object-fit: contain;
+    }
+    .slider-handle {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 36px; height: 36px; background: var(--gold-grad);
+      border-radius: 50%; cursor: ew-resize; display: flex; align-items: center; justify-content: center;
+      color: #000; font-weight: 900; box-shadow: var(--gold-glow); z-index: 10;
+    }
+    .mode-btn {
+      padding: 0.4rem 0.9rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600;
+      background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border-gold);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: var(--gold-grad); color: #000; border-color: var(--text-gold);
+    }
+    .comment-card {
+      background: rgba(10, 8, 5, 0.85); border: 1px solid var(--border-gold);
+      border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem;
+    }
+    #mindmap { height: 430px; border: 1px solid var(--border-gold); border-radius: 10px; background: rgba(10, 8, 5, 0.72); }
+    .mindmap-note { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.8rem; }
+    .modern-reading { padding:1.1rem; border:1px solid rgba(140,219,210,.32); border-radius:12px; background:rgba(44,134,133,.09); }
+    .modern-reading h4 { color:#a7eee6; margin-bottom:.35rem; }
+    .modern-reading-note { color:var(--text-muted); font-size:.82rem; }
+    .modern-reading-changes { display:flex; gap:.45rem; flex-wrap:wrap; margin-top:.75rem; }
+    .modern-reading-change { padding:.3rem .55rem; border-radius:8px; background:rgba(6,13,16,.46); border:1px solid rgba(255,255,255,.10); font-size:.8rem; }
+    .modern-reading-change b { color:#a7eee6; }
+  </style>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">🏺 {{ m.title }}</h2>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <a href="/repository" class="btn-secondary">← Back to Repository</a>
+      <a href="/manuscript/{{ m.id }}/export/html" class="btn-secondary">📄 Print PDF / HTML</a>
+      <a href="/manuscript/{{ m.id }}/export/txt" class="btn-secondary">📝 Export TXT</a>
+      {% if session.get('user') and session.get('user').role == 'Administrator' %}
+      <button onclick="deleteMs({{ m.id }})" class="btn-secondary" style="color:var(--red-glow);border-color:var(--red-glow)">🗑️ Delete</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="detail-grid">
+
+    <!-- Interactive Image Comparison Wipe Slider -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+        <h3>🖼️ Interactive Image Comparison Slider</h3>
+        <div style="display:flex;gap:0.4rem">
+          <button class="mode-btn active" onclick="switchView('restored')">✨ Restored</button>
+          <button class="mode-btn" onclick="switchView('preprocessed')">⚙️ Preprocessed</button>
+          <button class="mode-btn" onclick="switchView('original')">📷 Original</button>
+        </div>
+      </div>
+
+      <div class="slider-container" id="sliderBox">
+        <!-- Base Restored -->
+        <img id="baseImg" class="slider-img"
+             src="{% if m.restored_path and m.restored_path.startswith('http') %}{{ m.restored_path }}{% else %}/uploads/{{ m.filename.rsplit('.',1)[0] }}_res.png{% endif %}"
+             onerror="this.src='/uploads/{{ m.filename }}'" alt="Restored"/>
+
+        <!-- Overlay Original -->
+        <div class="img-overlay" id="overlayBox">
+          <img id="overlayImg"
+               src="{% if m.original_path and (m.original_path.startswith('http') or m.original_path.startswith('/')) %}{{ m.original_path }}{% else %}/uploads/{{ m.filename }}{% endif %}"
+               alt="Original"/>
+        </div>
+        <div class="slider-handle" id="sliderHandle">↔</div>
+      </div>
+      <p style="text-align:center;font-size:0.85rem;color:var(--text-muted);margin-top:0.6rem">
+        Drag slider left/right to compare Original manuscript vs. Restored U-Net output
+      </p>
+      {% if m.source_pdf_path %}
+      <p style="text-align:center;font-size:0.85rem;color:var(--text-muted);margin-top:.5rem">Page 1 of {{ m.source_pdf_page_count }} was analyzed. <a href="{{ m.source_pdf_path }}" download>Download the preserved original PDF ↗</a></p>
+      {% endif %}
+    </div>
+
+    <!-- Metadata -->
+    <div class="card">
+      <h3>📋 Manuscript Metadata &amp; Discovery Site</h3>
+      <table class="meta-table">
+        <tr><td>📍 Discovery Site</td><td>{{ m.location }}</td></tr>
+        <tr><td>🏛️ Dynasty Period</td><td>{{ m.dynasty }} ({{ m.period }})</td></tr>
+        <tr><td>📂 Subject Category</td><td><span class="badge cat-{{ m.category|lower }}">{{ m.category }}</span></td></tr>
+        <tr><td>✍️ Script Style</td><td>{{ m.style }}</td></tr>
+        <tr><td>🎯 ML Confidence</td><td>{{ (m.confidence * 100)|int }}%</td></tr>
+        <tr><td>🕐 Digitized On</td><td>{{ m.created_at[:16] }}</td></tr>
+        {% if m.latitude and m.longitude %}
+        <tr><td>🗺️ Map Coordinates</td><td>{{ m.latitude }}, {{ m.longitude }}</td></tr>
+        {% endif %}
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>📜 Original OCR</h3>
+      <div class="tamil-text" id="originalOcrText">{{ original_ocr or '[No text extracted]' }}</div>
+    </div>
+
+    <div class="card">
+      <h3>✅ Corrected Tamil <span id="ocrConfidence" class="suggestion-badge" title="Estimated OCR quality, not a calibrated probability">{{ (correction.confidence * 100)|round|int }}% estimated</span></h3>
+      <textarea id="cleanText" class="tamil-text clean tamil-edit" aria-label="Edit corrected Tamil OCR">{{ correction.corrected_text or m.clean_text or '' }}</textarea>
+      <div id="uncertainWords" class="uncertain-words" aria-live="polite">
+        {% for word in correction.uncertain_words %}<span class="uncertain-word">{{ word }}</span>{% endfor %}
+      </div>
+      <p id="correctionWarning" class="modern-tamil-notice" role="status">{{ correction.warning }}</p>
+      <div style="display:flex;gap:.75rem;align-items:center;margin-top:.75rem;flex-wrap:wrap">
+        <button class="copy-btn" onclick="copyCleanText()">📋 Copy Corrected Tamil</button>
+        <a href="/manuscript/{{ m.id }}/export/txt" class="dl-btn" download="tamil_text.txt">⬇ Download TXT</a>
+        <button type="button" class="copy-btn" id="retryOcrButton" data-manuscript-id="{{ m.id }}">↻ Retry OCR</button>
+      </div>
+    </div>
+
+    <div class="card" hidden>
+      <div class="modern-reading">
+        <h4>✨ Modern Tamil</h4>
+        <p id="modernTamilNotice" class="modern-reading-note"></p>
+        <span id="modernTamilConfidence" class="suggestion-badge">Awaiting conversion</span>
+        <div id="modernTamilText" class="tamil-text clean" style="margin-top:.75rem"></div>
+        <div id="modernTamilChanges" class="modern-reading-changes"></div>
+        <div style="display:flex;gap:.65rem;align-items:center;margin-top:.8rem;flex-wrap:wrap">
+          <button type="button" id="convertModernTamilButton" class="copy-btn">Convert to Modern Tamil</button>
+          <span id="modernTamilLoading" class="modern-tamil-note" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Annotations & Scholarly Discussion -->
+    <div class="card">
+      <h3>💬 Scholarly Annotations &amp; Researcher Comments</h3>
+      {% if comments %}
+      <div style="margin-bottom:1.25rem">
+        {% for c in comments %}
+        <div class="comment-card">
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem">
+            <strong style="color:var(--text-gold)">{{ c.user_name }}</strong>
+            <span class="badge cat-literature">{{ c.user_role }}</span>
+          </div>
+          <p style="font-size:0.92rem;color:var(--text-main)">{{ c.comment_text }}</p>
+          <small style="color:var(--text-dim);font-size:0.78rem">Posted on {{ c.created_at[:16] }}</small>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="muted" style="margin-bottom:1rem">No scholarly annotations posted yet. Be the first to comment!</p>
+      {% endif %}
+
+      <form id="commentForm">
+        <input type="hidden" id="msId" value="{{ m.id }}"/>
+        <div class="form-group" style="margin-bottom:0.75rem">
+          <label>Add Research Note / Annotation</label>
+          <textarea id="commentText" rows="3" class="search-input" placeholder="Type your scholarly notes or epigraphic observation here..." required style="width:100%;resize:vertical"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">✍️ Post Annotation</button>
+      </form>
+    </div>
+
+    <!-- Artifacts -->
+    <div class="card">
+      <h3>🏺 Associated Historical Artifacts &amp; Symbols</h3>
+      {% if artifacts %}
+      <ul class="artifact-list" style="list-style:none">
+        {% for a in artifacts %}
+        <li style="padding:0.6rem 0;border-bottom:1px solid rgba(217,119,6,0.15)">
+          <strong style="color:var(--text-gold)">{{ a.name }}</strong> — {{ a.description }}
+          {% if a.symbol %}<span class="symbol" style="font-size:1.3rem;margin-left:0.5rem">{{ a.symbol }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No associated artifacts recorded yet.</p>
+      {% endif %}
+
+      <!-- Add artifact form -->
+      <details style="margin-top:1.25rem">
+        <summary style="cursor:pointer;color:var(--text-gold);font-weight:600">➕ Record Associated Artifact</summary>
+        <form id="artifactForm" style="margin-top:1rem">
+          <input type="hidden" name="manuscript_id" value="{{ m.id }}"/>
+          <div class="form-grid">
+            <input type="text" name="name" placeholder="Artifact name (e.g. Bronze Stylus)" required/>
+            <input type="text" name="description" placeholder="Description"/>
+            <input type="text" name="symbol" placeholder="Symbol (optional, e.g. 🖊️)"/>
+          </div>
+          <button type="submit" class="btn-primary" style="margin-top:0.5rem">Save Artifact</button>
+        </form>
+      </details>
+    </div>
+
+    <!-- Connected historical knowledge graph -->
+    <div class="card">
+      <h3>🕸️ Interactive Manuscript Mind Map</h3>
+      <p class="mindmap-note">Explore the catalogue links between this manuscript, its historical context, tags, and associated artifacts. Drag nodes or use the mouse wheel to zoom.</p>
+      <div id="mindmap" aria-label="Interactive manuscript knowledge graph"></div>
+    </div>
+
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+
+<script>window.palmleafManuscriptId = {{ m.id|tojson }};</script>
+<script src="{{ url_for('static', filename='js/tamil_tools.js') }}"></script>
+<script>
+// Image Slider Logic
+const sliderBox = document.getElementById("sliderBox");
+const overlayBox = document.getElementById("overlayBox");
+const sliderHandle = document.getElementById("sliderHandle");
+
+let isDragging = false;
+sliderBox?.addEventListener("mousedown", () => isDragging = true);
+window.addEventListener("mouseup", () => isDragging = false);
+sliderBox?.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+  const rect = sliderBox.getBoundingClientRect();
+  let x = e.clientX - rect.left;
+  if (x < 0) x = 0;
+  if (x > rect.width) x = rect.width;
+  const pct = (x / rect.width) * 100;
+  overlayBox.style.width = pct + "%";
+  sliderHandle.style.left = pct + "%";
+});
+
+function switchView(type) {
+  document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
+  const baseImg = document.getElementById("baseImg");
+  if (type === "restored") {
+    baseImg.src = "{% if m.restored_path and m.restored_path.startswith('http') %}{{ m.restored_path }}{% else %}/uploads/{{ m.filename.rsplit('.',1)[0] }}_res.png{% endif %}";
+  } else if (type === "preprocessed") {
+    baseImg.src = "{% if m.pre_path and m.pre_path.startswith('http') %}{{ m.pre_path }}{% else %}/uploads/{{ m.filename.rsplit('.',1)[0] }}_pre.png{% endif %}";
+  } else {
+     baseImg.src = "{% if m.original_path and (m.original_path.startswith('http') or m.original_path.startswith('/')) %}{{ m.original_path }}{% else %}/uploads/{{ m.filename }}{% endif %}";
+  }
+}
+
+function copyCleanText() {
+  const field = document.getElementById("cleanText");
+  const txt = field?.value || field?.innerText;
+  if (!txt) return;
+  navigator.clipboard.writeText(txt).then(() => {
+    alert("✅ Tamil text copied to clipboard!");
+  });
+}
+
+document.getElementById("commentForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const mid = document.getElementById("msId").value;
+  const comment = document.getElementById("commentText").value;
+  await fetch(`/api/manuscript/${mid}/comment`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ comment })
+  });
+  location.reload();
+});
+
+document.getElementById("artifactForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd.entries());
+  await fetch("/api/artifact/add", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(data)
+  });
+  location.reload();
+});
+
+async function deleteMs(id) {
+  if (!confirm("Delete this manuscript permanently?")) return;
+  await fetch(`/api/manuscript/${id}/delete`, { method: "POST" });
+  window.location.href = "/repository";
+}
+
+async function renderMindMap() {
+  const container = document.getElementById("mindmap");
+  if (!container || !window.d3) return;
+  const response = await fetch("/api/manuscript/{{ m.id }}/mindmap");
+  const graph = await response.json();
+  if (!response.ok) {
+    container.textContent = graph.error || "Unable to load the mind map.";
+    return;
+  }
+
+  const width = container.clientWidth || 760;
+  const height = container.clientHeight || 430;
+  const colors = {
+    manuscript: "#f59e0b", dynasty: "#ef4444", period: "#a78bfa", script: "#38bdf8",
+    subject: "#34d399", location: "#fb923c", tag: "#60a5fa", artifact: "#f472b6"
+  };
+  const svg = d3.select(container).append("svg").attr("width", width).attr("height", height);
+  const group = svg.append("g");
+  svg.call(d3.zoom().scaleExtent([0.5, 3]).on("zoom", event => group.attr("transform", event.transform)));
+
+  const simulation = d3.forceSimulation(graph.nodes)
+    .force("link", d3.forceLink(graph.links).id(node => node.id).distance(145))
+    .force("charge", d3.forceManyBody().strength(-520))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .force("collision", d3.forceCollide(42));
+  const links = group.append("g").attr("stroke", "#b8860b").attr("stroke-opacity", 0.55)
+    .selectAll("line").data(graph.links).join("line").attr("stroke-width", 1.5);
+  const nodes = group.append("g").selectAll("g").data(graph.nodes).join("g")
+    .call(d3.drag()
+      .on("start", (event, node) => { if (!event.active) simulation.alphaTarget(.3).restart(); node.fx = node.x; node.fy = node.y; })
+      .on("drag", (event, node) => { node.fx = event.x; node.fy = event.y; })
+      .on("end", (event, node) => { if (!event.active) simulation.alphaTarget(0); node.fx = null; node.fy = null; }));
+  nodes.append("circle").attr("r", node => node.type === "manuscript" ? 27 : 19)
+    .attr("fill", node => colors[node.type] || "#a3937d").attr("stroke", "#fff").attr("stroke-width", 1.5);
+  nodes.append("title").text(node => `${node.type}: ${node.label}`);
+  nodes.append("text").text(node => node.label.length > 20 ? `${node.label.slice(0, 18)}…` : node.label)
+    .attr("text-anchor", "middle").attr("y", 37).attr("fill", "#fbf8f2").attr("font-size", 11);
+  simulation.on("tick", () => {
+    links.attr("x1", link => link.source.x).attr("y1", link => link.source.y)
+      .attr("x2", link => link.target.x).attr("y2", link => link.target.y);
+    nodes.attr("transform", node => `translate(${node.x},${node.y})`);
+  });
+}
+
+renderMindMap().catch(() => {
+  const container = document.getElementById("mindmap");
+  if (container) container.textContent = "Unable to load the mind map.";
+});
+</script>
+</body>
+</html>

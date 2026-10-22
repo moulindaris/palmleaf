@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tamil Manuscript Digital Preservation & Research Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <header class="navbar">
+        <div class="brand">
+            <span class="icon">📜</span>
+            <h1>Tamil Manuscript Digital Preservation &amp; Research Platform</h1>
+        </div>
+        <div class="user-badge">Role: <strong>Historian / Researcher</strong></div>
+    </header>
+
+    <main class="container">
+
+        <!-- 1. Upload & Pipeline -->
+        <section class="card upload-section">
+            <h2>1. Manuscript Digitization &amp; Processing Pipeline</h2>
+            <form id="uploadForm" class="upload-form">
+                <input type="file" id="fileInput" name="file" accept="image/*" required />
+                <input type="text" name="title" placeholder="Manuscript Title (e.g., Tholkappiyam Commentary)" />
+                <select name="subject">
+                    <option value="Medicine & Alchemy">Medicine &amp; Alchemy (சித்த மருத்துவம்)</option>
+                    <option value="Literature & Grammar">Literature &amp; Grammar (இலக்கியம்)</option>
+                    <option value="Astrology & Astronomy">Astrology &amp; Astronomy (வானியல்)</option>
+                    <option value="Philosophy & Religion">Philosophy &amp; Saivism (தத்துவம்)</option>
+                </select>
+                <button type="submit" class="btn primary">▶ Run Complete AI Pipeline</button>
+            </form>
+            <div id="loader" class="loader hidden">
+                Processing Image → Noise Removal → UNet Restoration → Tamil OCR → NLP Structuring...
+            </div>
+        </section>
+
+        <!-- 2 & 3. Image + OCR side by side -->
+        <div class="workspace-grid">
+
+            <section class="card">
+                <h2>2. Image Restoration (Before vs. After)</h2>
+                <div class="comparison-container">
+                    <div class="image-box">
+                        <span class="badge">Original Degraded Palm-Leaf</span>
+                        <img id="originalImg" src="/static/uploads/sample_leaf.jpg" alt="Original"
+                             onerror="this.src='https://via.placeholder.com/400x200?text=Upload+Manuscript'" />
+                    </div>
+                    <div class="image-box">
+                        <span class="badge success">PyTorch Restored &amp; Binarized</span>
+                        <img id="restoredImg" src="/static/restored/sample_leaf_restored.png" alt="Restored"
+                             onerror="this.src='https://via.placeholder.com/400x200?text=Restoration+Output'" />
+                    </div>
+                </div>
+                <div class="meta-pills" id="scriptMetadata">
+                    <span>Script: <strong>Tamil-Grantha</strong></span>
+                    <span>Era: <strong>Medieval Chola</strong></span>
+                    <span>Confidence: <strong>94.2%</strong></span>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>3. Tamil OCR &amp; Text Normalization</h2>
+                <div class="ocr-grid">
+                    <div>
+                        <label>Raw Tesseract OCR Output:</label>
+                        <textarea id="rawOcrText" readonly placeholder="Raw text output with noise..."></textarea>
+                    </div>
+                    <div>
+                        <label>Cleaned &amp; Corrected Text (Rule-based NLP):</label>
+                        <textarea id="cleanedText" readonly placeholder="Cleaned text with ligatures reconstructed..."></textarea>
+                    </div>
+                </div>
+                <div class="keywords-box">
+                    <strong>Extracted Knowledge Entities: </strong>
+                    <div id="keywordBadges" style="margin-top:6px"></div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- 4. Map -->
+        <section class="card">
+            <h2>4. Historical Map Context (Ancient Discovery Site vs. Modern Repository)</h2>
+            <div id="map" class="map-view"></div>
+        </section>
+
+        <!-- 5. Mind Map -->
+        <section class="card">
+            <h2>5. AI-Assisted Mind Map &amp; Knowledge Graph</h2>
+            <div id="mindmap" class="mindmap-container"></div>
+        </section>
+
+        <!-- 6. Script Comparison -->
+        <section class="card">
+            <h2>6. Paleographic Script Comparison Matrix</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Modern Tamil Glyph</th>
+                        <th>Tamil Brahmi (Damili)</th>
+                        <th>Vatteluttu (வட்டெழுத்து)</th>
+                        <th>Grantha (கிரந்தம்)</th>
+                        <th>Stroke Complexity Analysis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>க (Ka)</strong></td>
+                        <td>𑀓 (Cross mark)</td>
+                        <td>Rounded loop</td>
+                        <td>Loop with right serif</td>
+                        <td>Evolution from geometric cross to circular cursive strokes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ம (Ma)</strong></td>
+                        <td>𑀫 (Circle with cup)</td>
+                        <td>Angular base</td>
+                        <td>Ornate curve</td>
+                        <td>Simplification of bottom loop across centuries</td>
+                    </tr>
+                    <tr>
+                        <td><strong>த (Ta)</strong></td>
+                        <td>𑀢 (Trident base)</td>
+                        <td>Curved top bar</td>
+                        <td>Horizontal serif stroke</td>
+                        <td>Gradual reduction of trident to single horizontal bar</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/maps.js"></script>
+    <script src="/static/js/mindmap.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

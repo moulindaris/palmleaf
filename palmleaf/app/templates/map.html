@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Side-by-Side Historical &amp; Modern Map — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    html { scroll-behavior: smooth; }
+    .dual-map-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    .map-box {
+      height: 500px;
+      border-radius: 12px;
+      border: 1px solid var(--border-gold);
+      box-shadow: var(--shadow-lg);
+    }
+    .leaflet-popup-content-wrapper {
+      background: #120f0a !important; color: #fbf8f2 !important;
+      border: 1px solid #d97706 !important; font-family: 'Outfit', sans-serif;
+    }
+    .leaflet-popup-tip { background: #120f0a !important; }
+    .loc-row { transition: background 0.2s; cursor: pointer; }
+    .loc-row:hover { background: rgba(245, 158, 11, 0.08); }
+    @media (max-width: 900px) {
+      .dual-map-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+  <div class="page-header" id="mapHeader">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">🗺️ Dual Map: Ancient Discovery vs. Modern Archive</h2>
+    <p style="color:var(--text-muted)">The map backgrounds use today’s geography for orientation. Historic marker names reflect the period when known; they are not a reconstruction of ancient borders or city labels. For example, the area of today’s Chennai was part of Tondaimandalam.</p>
+  </div>
+
+  <div class="dual-map-grid" id="mapGrid">
+
+    <!-- LEFT: Ancient Discovery Map -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <h3 style="margin-bottom:0">🏛️ Ancient Discovery Location Map</h3>
+        <span class="badge cat-history">Historical Region / Site</span>
+      </div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.85rem">
+        Historic references are approximate regional centers, not confirmed manuscript discovery points. Manuscript pins appear here after location data is saved.
+      </p>
+      <div id="ancientMap" class="map-box"></div>
+    </div>
+
+    <!-- RIGHT: Modern Repository Map -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <h3 style="margin-bottom:0">🏢 Modern Preservation Archive Map</h3>
+        <span class="badge cat-literature">Present Preservation Site</span>
+      </div>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.85rem">
+        Shows present-day libraries, museums, and oriental manuscript vaults preserving leaves today
+      </p>
+      <div id="modernMap" class="map-box"></div>
+    </div>
+
+  </div>
+
+  <!-- Side-by-Side Index Table -->
+  <div class="card" style="margin-top:1.5rem" id="indexSection">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h3>📍 Interactive Location Mapping Index ({{ locations|length }} locations)</h3>
+      <small style="color:var(--text-gold)">👇 Click any row or 'Locate on Map' to scroll up &amp; zoom</small>
+    </div>
+
+    {% if locations %}
+    <table class="meta-table">
+      <thead>
+        <tr>
+          <th>Manuscript / Reference Point</th>
+          <th>🏛️ Historical Region / Site</th>
+          <th>Dynasty</th>
+          <th>🏢 Modern Archive</th>
+          <th>Interactive Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loc in locations %}
+        <tr class="loc-row" onclick="focusOnLocation({{ loc.id|tojson }}, {{ loc.latitude|tojson }}, {{ loc.longitude|tojson }}, {{ loc.modern_lat|tojson }}, {{ loc.modern_lon|tojson }})">
+          <td>
+            {% if loc.is_reference %}
+            <strong>{{ loc.title }}</strong><br/><small style="color:var(--text-muted)">Historic reference point</small>
+            {% else %}
+            <a href="/manuscript/{{ loc.id }}" style="color:var(--text-gold);font-weight:600" onclick="event.stopPropagation()">{{ loc.title }}</a>
+            {% endif %}
+          </td>
+          <td>📍 {{ loc.historical_location }}</td>
+          <td><span class="badge cat-philosophy">{{ loc.dynasty }}</span></td>
+          <td>🏛️ <strong>{{ loc.modern_name }}</strong></td>
+          <td>
+            <button class="btn-primary" style="padding:0.35rem 0.75rem;font-size:0.8rem" onclick="event.stopPropagation(); focusOnLocation({{ loc.id|tojson }}, {{ loc.latitude|tojson }}, {{ loc.longitude|tojson }}, {{ loc.modern_lat|tojson }}, {{ loc.modern_lon|tojson }})">
+              🎯 Locate on Map
+            </button>
+            {% if not loc.is_reference %}
+            <a href="/manuscript/{{ loc.id }}" class="btn-secondary" style="font-size:0.8rem;margin-left:0.3rem" onclick="event.stopPropagation()">Detail →</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">No location data available yet.</p>
+    {% endif %}
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const locations = {{ locations | tojson }};
+  const ancientMarkers = {};
+  const modernMarkers = {};
+
+  // 1. Initialize Ancient Discovery Map (Left)
+  const ancientMap = L.map("ancientMap").setView([10.8, 78.7], 7);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(ancientMap);
+
+  // 2. Initialize Modern Archive Map (Right)
+  const modernMap = L.map("modernMap").setView([10.8, 78.7], 7);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(modernMap);
+
+  // Synchronize panning between maps for side-by-side exploration
+  let syncing = false;
+  ancientMap.on('move', () => {
+    if (!syncing) {
+      syncing = true;
+      modernMap.setView(ancientMap.getCenter(), ancientMap.getZoom(), { animate: false });
+      syncing = false;
+    }
+  });
+  modernMap.on('move', () => {
+    if (!syncing) {
+      syncing = true;
+      ancientMap.setView(modernMap.getCenter(), modernMap.getZoom(), { animate: false });
+      syncing = false;
+    }
+  });
+
+  // Populate Markers
+  locations.forEach(loc => {
+    // Ancient Marker
+    const aMarker = L.marker([loc.latitude, loc.longitude]).addTo(ancientMap);
+    aMarker.bindPopup(`
+      <strong style="color:#f59e0b;font-family:'Cinzel',serif">${loc.title}</strong><br/>
+      🏛️ Historical region/site: <strong>${loc.historical_location}</strong><br/>
+      👑 Dynasty: ${loc.dynasty} (${loc.period})<br/>
+      ${loc.is_reference ? '<small>Approximate historical reference point</small>' : `<a href="/manuscript/${loc.id}" style="color:#60a5fa">View Record Detail →</a>`}
+    `);
+    ancientMarkers[loc.id] = aMarker;
+
+    // Modern Marker
+    if (Number.isFinite(loc.modern_lat) && Number.isFinite(loc.modern_lon)) {
+      const mMarker = L.marker([loc.modern_lat, loc.modern_lon]).addTo(modernMap);
+      mMarker.bindPopup(`
+        <strong style="color:#2563eb;font-family:'Cinzel',serif">${loc.title}</strong><br/>
+        🏢 Modern Archive: <strong>${loc.modern_name}</strong><br/>
+        🏷️ Vault Type: ${loc.modern_type}<br/>
+        ${loc.is_reference ? '<small>Reference archive location</small>' : `<a href="/manuscript/${loc.id}" style="color:#2563eb">View Preservation Record →</a>`}
+      `);
+      modernMarkers[loc.id] = mMarker;
+    }
+  });
+
+  // Interactive Scroll-to-Map and Focus function
+  function focusOnLocation(id, lat, lon, modLat, modLon) {
+    // 1. Smoothly scroll up to the map section
+    document.getElementById("mapGrid").scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // 2. Fly/Zoom to location on maps
+    setTimeout(() => {
+      ancientMap.flyTo([lat, lon], 12, { animate: true, duration: 1.2 });
+      if (Number.isFinite(modLat) && Number.isFinite(modLon)) {
+        modernMap.flyTo([modLat, modLon], 12, { animate: true, duration: 1.2 });
+      }
+
+      // 3. Open popups
+      if (ancientMarkers[id]) ancientMarkers[id].openPopup();
+      if (modernMarkers[id]) modernMarkers[id].openPopup();
+    }, 400);
+  }
+</script>
+</body>
+</html>

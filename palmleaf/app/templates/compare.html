@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Repository Comparison — PalmLeaf AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+Tamil:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    .compare-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:1rem; align-items:end; }
+    .compare-controls label { display:block; margin-bottom:.4rem; color:var(--text-muted); }
+    .compare-controls select { width:100%; min-height:46px; }
+    .compare-table { width:100%; border-collapse:collapse; }
+    .compare-table th,.compare-table td { padding:.85rem .75rem; text-align:left; border-bottom:1px solid var(--border-gold); vertical-align:top; }
+    .compare-table th { color:var(--text-gold); }
+    .compare-table td:first-child { color:var(--text-muted); width:22%; }
+    .match-mark { color:#34d399; font-size:.82rem; }
+    .record-link { color:var(--text-gold); text-decoration:underline; }
+    .lineage-note { border-left:3px solid var(--text-gold); padding:.75rem 1rem; background:rgba(245,158,11,.06); border-radius:0 8px 8px 0; }
+    @media(max-width:650px) { .compare-table th,.compare-table td { padding:.65rem .45rem; font-size:.88rem; } .compare-table td:first-child { width:26%; } }
+  </style>
+</head>
+<body>
+{% include "partials/nav.html" %}
+
+<main class="container" style="padding-top:2rem">
+  <div class="page-header">
+    <h2 style="font-family:'Cinzel',serif;color:var(--text-gold)">📚 Compare Repository Records</h2>
+    <p style="color:var(--text-muted)">Choose two records to compare what this repository actually contains. Missing fields stay marked as “Not recorded.”</p>
+  </div>
+
+  {% if records|length >= 2 %}
+  <form class="card compare-controls" method="get" action="/compare" style="margin-bottom:1.5rem">
+    <div>
+      <label for="leftRecord">First repository record</label>
+      <select id="leftRecord" name="left">
+        {% for record in records %}
+        <option value="{{ record.id }}" {% if left and record.id == left.id %}selected{% endif %}>{{ record.title }}{% if record.demo_record %} · catalog listing{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="rightRecord">Compare with</label>
+      <select id="rightRecord" name="right">
+        {% for record in records %}
+        <option value="{{ record.id }}" {% if right and record.id == right.id %}selected{% endif %}>{{ record.title }}{% if record.demo_record %} · catalog listing{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="btn-primary" type="submit">Compare these records</button>
+  </form>
+
+  <section class="card" aria-live="polite">
+    <h3 style="color:var(--text-gold)">{{ left.title }} <span style="color:var(--text-muted);font-weight:400">and</span> {{ right.title }}</h3>
+    <p style="color:var(--text-muted)">Values below come from the selected repository records. A green match means both records explicitly have the same value.</p>
+    <div style="overflow-x:auto">
+      <table class="compare-table">
+        <thead><tr><th>Record detail</th><th>{{ left.title }}</th><th>{{ right.title }}</th></tr></thead>
+        <tbody>
+          {% for row in comparison %}
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.left }}{% if row.same %}<div class="match-mark">Same recorded value</div>{% endif %}</td>
+            <td>{{ row.right }}{% if row.same %}<div class="match-mark">Same recorded value</div>{% endif %}</td>
+          </tr>
+          {% endfor %}
+          <tr>
+            <td>Record type</td>
+            <td>{% if left.demo_record %}CICT catalog example · no scan{% else %}Uploaded / digitized record{% endif %}</td>
+            <td>{% if right.demo_record %}CICT catalog example · no scan{% else %}Uploaded / digitized record{% endif %}</td>
+          </tr>
+          <tr>
+            <td>Source</td>
+            <td>{% if left.source_url %}<a class="record-link" href="{{ left.source_url }}" target="_blank" rel="noopener">{{ left.source_name or 'Open source record' }}</a>{% else %}Project upload{% endif %}</td>
+            <td>{% if right.source_url %}<a class="record-link" href="{{ right.source_url }}" target="_blank" rel="noopener">{{ right.source_name or 'Open source record' }}</a>{% else %}Project upload{% endif %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% elif records|length == 1 %}
+  <section class="card">
+    <h3 style="color:var(--text-gold)">{{ records[0].title }}</h3>
+    <p>This is the only record currently available to compare. Add another manuscript or catalog record to see a repository-based comparison.</p>
+    <a class="btn-primary" href="/#digitize">Add a manuscript</a>
+  </section>
+  {% else %}
+  <section class="card" style="text-align:center">
+    <h3 style="color:var(--text-gold)">No repository records yet</h3>
+    <p style="color:var(--text-muted)">Upload a manuscript or add source-linked catalog records. This page will compare their recorded details.</p>
+    <a class="btn-primary" href="/#digitize">Add a manuscript</a>
+  </section>
+  {% endif %}
+
+  <section class="card" style="margin-top:1.5rem">
+    <h3 style="color:var(--text-gold)">How to read language and script relationships</h3>
+    <div class="lineage-note">
+      <strong>Languages are not scripts.</strong> A script can be adapted by several languages, and two scripts sharing an ancestor does not mean their languages descend from one another. The repository’s current classifier label (for example, a subject category or visual-style heuristic) does not identify a historical script such as Tamil-Brahmi or Grantha.
+    </div>
+    <p style="margin-top:1rem;color:var(--text-muted)">So this comparison only reports record-backed similarities. It will not claim a language lineage from a manuscript title, dynasty, or visual style.</p>
+    <h4 style="color:var(--text-gold);margin-bottom:.5rem">Reference context</h4>
+    <ul style="color:var(--text-muted);line-height:1.9">
+      <li><a class="record-link" href="{{ source_urls['Tamil-Brahmi'] }}" target="_blank" rel="noopener">Tamil Nadu Archaeology: Tamil-Brahmi</a> — regional script evidence and Tamil-Brahmi inscriptions.</li>
+      <li><a class="record-link" href="{{ source_urls['Tamil script'] }}" target="_blank" rel="noopener">Tamil Nadu Archaeology: Tamil script inscriptions</a> — an institutional overview of script history.</li>
+      <li><a class="record-link" href="{{ source_urls['Grantha'] }}" target="_blank" rel="noopener">Tamil Nadu Archaeology: Grantha inscriptions</a> — Grantha is a script used for Sanskrit, not a language family.</li>
+      <li><a class="record-link" href="{{ source_urls['Sinhala language'] }}" target="_blank" rel="noopener">Columbia University: Sinhala</a> — Sinhala is Indo-Aryan; its language family is distinct from its writing system.</li>
+      <li><a class="record-link" href="{{ source_urls['Sinhala script'] }}" target="_blank" rel="noopener">SOAS: Evolution of the Sinhalese script</a> — study of the historical script, separate from language genealogy.</li>
+    </ul>
+    <p style="color:var(--text-muted);font-size:.9rem">Automatic historical-script recognition would need labeled manuscript images and a trained model. Recording sourced language and script fields allows repository comparisons without ML; a lineage claim still needs historical evidence.</p>
+  </section>
+</main>
+
+{% include "partials/footer.html" %}
+</body>
+</html>
